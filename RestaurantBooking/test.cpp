@@ -1,12 +1,48 @@
 #include "gmock/gmock.h"
 #include "booking_scheduler.cpp"
 
-TEST(BookingSchedulerTest, 예약은정시에만가능하다정시가아닌경우예약불가) {
 
+TEST(BookingSchedulerTest, 예약은정시에만가능하다정시가아닌경우예약불가) {
+	
+	//arrange
+	tm notOnTheHour = { 0 };
+	notOnTheHour.tm_year = 2021 - 1900;
+	notOnTheHour.tm_mon = 03-1;
+	notOnTheHour.tm_mday = 26;
+	notOnTheHour.tm_hour = 9;
+	notOnTheHour.tm_min = 5;
+	notOnTheHour.tm_isdst = -1;
+	mktime(&notOnTheHour);
+
+	Customer customer{ "Fake name", "010-1234-5678" };
+	Schedule* schedule= new Schedule{ notOnTheHour, 1, customer };
+	BookingScheduler bookingScheduler{3};
+	
+	//act
+	EXPECT_THROW({
+			bookingScheduler.addSchedule(schedule);
+		}, std::runtime_error);
 }
 
 TEST(BookingSchedulerTest, 예약은정시에만가능하다정시인경우예약가능) {
+	//arrange
+	tm onTheHour = { 0 };
+	onTheHour.tm_year = 2021 - 1900;
+	onTheHour.tm_mon = 03 - 1;
+	onTheHour.tm_mday = 26;
+	onTheHour.tm_hour = 9;
+	onTheHour.tm_min = 5;
+	onTheHour.tm_isdst = -1;
+	mktime(&onTheHour);
 
+	Customer customer{ "Fake name", "010-1234-5678" };
+	Schedule* schedule = new Schedule{ onTheHour, 1, customer };
+	BookingScheduler bookingScheduler{ 3 };
+
+	//act
+	EXPECT_THROW({
+			bookingScheduler.addSchedule(schedule);
+		}, std::runtime_error);
 }
 
 TEST(BookingSchedulerTest, 시간대별인원제한이있다같은시간대에Capacity초과할경우예외발생) {
