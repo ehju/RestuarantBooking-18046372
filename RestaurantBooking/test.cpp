@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 #include "booking_scheduler.cpp"
 #include "testable_sms_sender.cpp"
+#include "testable_mail_sender.cpp"
 using namespace testing;
 
 class BookingItem : public Test {
@@ -8,6 +9,9 @@ protected:
 	void SetUp() override {
 		NOT_ON_THE_HOUR = getTime(2021, 3, 26, 9, 5);
 		ON_THE_HOUR = getTime(2021, 3, 26, 9, 0);
+
+		bookingScheduler.setSmsSender(&testableSmsSender);
+		bookingScheduler.setMailSender(&testableMailSender);
 	}
 public:
 	tm getTime(int year, int mon, int day, int hour, int min) {
@@ -27,6 +31,9 @@ public:
 	const int CAPACITY_PER_HOUR = 3;
 
 	BookingScheduler bookingScheduler{ CAPACITY_PER_HOUR };
+	TestableSmsSender testableSmsSender;
+	TestableMailSender testableMailSender;
+
 };
 
 TEST_F(BookingItem, 예약은정시에만가능하다정시가아닌경우예약불가) {
@@ -81,10 +88,10 @@ TEST_F(BookingItem, 시간대별인원제한이있다같은시간대가다르면Capacity차있어도스케
 }
 
 TEST_F(BookingItem, 예약완료시SMS는무조건발송) {
-	TestableSmsSender testableSmsSender;
+	
 	//arrange
 	Schedule* schedule = new Schedule{ ON_THE_HOUR, CAPACITY_PER_HOUR, CUSTOMER };
-	bookingScheduler.setSmsSender(&testableSmsSender);
+	
 	//act
 	bookingScheduler.addSchedule(schedule); 
 
@@ -92,7 +99,13 @@ TEST_F(BookingItem, 예약완료시SMS는무조건발송) {
 }
 
 TEST_F(BookingItem, 이메일이없는경우에는이메일미발송) {
+	//arrange
+	Schedule* schedule = new Schedule{ ON_THE_HOUR, CAPACITY_PER_HOUR, CUSTOMER };
 
+	//act
+	bookingScheduler.addSchedule(schedule);
+
+	EXPECT_EQ(0, testableMailSender.getCountSendMailMethodCalled());
 }
 
 TEST_F(BookingItem, 이메일이있는경우에는이메일발송) {
