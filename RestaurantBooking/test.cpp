@@ -15,6 +15,11 @@ public:
 		mktime(&result);
 		return result;
 	}
+	tm plusHour(tm base, int hour) {
+		base.tm_hour += hour;
+		mktime(&base);
+		return base;
+	}
 	tm NOT_ON_THE_HOUR;
 	tm ON_THE_HOUR;
 	Customer CUSTOMER{ "Fake name", "010-1234-5678" };
@@ -67,8 +72,7 @@ TEST_F(BookingItem, 시간대별인원제한이있다같은시간대가다르면Capacity차있어도스케
 	Schedule* schedule = new Schedule{ ON_THE_HOUR, CAPACITY_PER_HOUR, CUSTOMER };
 	bookingScheduler.addSchedule(schedule);
 	//act
-	tm differentHour = ON_THE_HOUR;
-	differentHour.tm_hour += 1; // differenct time
+	tm differentHour = plusHour(ON_THE_HOUR,1);
 	mktime(&differentHour);
 	Schedule* newSchedule = new Schedule{ differentHour, UNDER_CAPACITY, CUSTOMER };
 	bookingScheduler.addSchedule(newSchedule); // exception
